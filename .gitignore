@@ -1,0 +1,31 @@
+# --- 데이터 폴더: 폴더 구조(.gitkeep)만 유지하고 실제 파일은 커밋 금지 ---
+data/raw/*
+data/processed/*
+data/output/*
+data/ground_truth/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/output/.gitkeep
+!data/ground_truth/.gitkeep
+
+# ground_truth에 실수로 텍스트 파일을 만들더라도 커밋되지 않도록 명시적으로 무시
+# (실제 사용 시 저작권 위배 소지에 대해서는 README 3번 참고)
+data/ground_truth/**/*.txt
+
+# --- 파이썬 관련 ---
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+
+# --- 모델/체크포인트 (TrOCR 파인튜닝 결과물 등, 대개 대용량) ---
+*.pt
+*.pth
+*.bin
+checkpoints/
+models/
+
+# --- OS/에디터 ---
+.DS_Store
+.vscode/

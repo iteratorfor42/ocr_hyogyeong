@@ -1,0 +1,59 @@
+# 기본 이미지 처리
+opencv-python>=4.8.0
+numpy>=1.24.0
+Pillow>=10.0.0
+
+# 1차 OCR 백엔드: PaddleOCR (검출+인식 통합, 파인튜닝 용이)
+# ※ 파이썬 버전/OS에 따라 설치가 안 될 수 있음 (아래 "개인 환경 기록" 참고)
+paddlepaddle>=2.5.0
+paddleocr>=2.7.0
+
+# 2차 OCR 백엔드(비교용): Tesseract 파이썬 바인딩
+# 시스템에 tesseract-ocr, tesseract-ocr-kor 도 별도 설치 필요
+pytesseract>=0.3.10
+
+# 향후 필사체 파인튜닝용 (TrOCR)
+# ※ 파이썬 버전/OS에 따라 설치가 안 될 수 있음 (아래 "개인 환경 기록" 참고)
+transformers>=4.35.0
+torch>=2.0.0
+
+# 평가 지표(CER/WER)
+python-Levenshtein>=0.21.0
+
+
+# ==============================================================================
+# [참고] 개인 환경 기록 (Windows / Python 3.14 기준)
+#
+# 아래는 특정 환경(Windows, Python 3.14)에서 실제로 설치를 진행한 기록입니다.
+# 사용하는 OS·Python 버전에 따라 이 과정이 필요 없거나 다를 수 있습니다.
+# 예를 들어 Python 3.10~3.12 등 PaddleOCR/torch가 정식 지원하는 버전이라면
+# 위의 paddlepaddle / paddleocr / transformers / torch 를 그대로 설치하면 되고,
+# 아래 절차를 따로 거칠 필요가 없습니다.
+#
+# 1. 패키지 설치
+#    pip install -r requirements.txt
+#    (※ 본인 환경은 Python 3.14 호환 문제로 paddle/torch 줄을 주석 처리한 뒤 설치함.
+#       설치가 실패하면 위 4개 줄 앞에 '#'을 붙여 주석 처리하고 재시도할 것)
+#
+# 2. Tesseract OCR 프로그램 설치 (Windows PowerShell)
+#    winget install --id UB-Mannheim.TesseractOCR -e --accept-package-agreements
+#    (※ msstore 약관 동의 Y 선택하여 완료)
+#    (※ macOS는 'brew install tesseract tesseract-lang',
+#        Ubuntu는 'sudo apt install tesseract-ocr tesseract-ocr-kor tesseract-ocr-chi-sim' 로 대체)
+#
+# 3. 환경 변수 적용 및 언어팩(한국어, 중국어) 설치 (Windows 기준)
+#    $env:Path += ";C:\Program Files\Tesseract-OCR"
+#
+#    # 임시 폴더로 다운로드
+#    Invoke-WebRequest -Uri "https://github.com/tesseract-ocr/tessdata/raw/main/kor.traineddata" -OutFile "$env:TEMP\kor.traineddata"
+#    Invoke-WebRequest -Uri "https://github.com/tesseract-ocr/tessdata/raw/main/chi_sim.traineddata" -OutFile "$env:TEMP\chi_sim.traineddata"
+#
+#    # 관리자 권한으로 tessdata 폴더에 이동 (경로 접근 거부 에러 해결용)
+#    Start-Process powershell -Verb RunAs -ArgumentList "-Command Move-Item -Path '$env:TEMP\kor.traineddata', '$env:TEMP\chi_sim.traineddata' -Destination 'C:\Program Files\Tesseract-OCR\tessdata\' -Force"
+#
+# 💡 [실행 시 주의할 점 - 본인 환경 기준]
+#    paddle을 주석 처리했다면 main.py 실행 시 PaddleOCR 대신 
+#    Tesseract 백엔드를 사용하도록 지정해야 합니다. (--backend 기본값이 tesseract면 생략 가능)
+#    예시:
+#    python main.py data/raw/hyogyeong_6na.jpg --vertical --backend tesseract --book "효경언해" --page "6ㄴ" --chapter "경(經) 1장 - (고문 제7장) 효평(孝平)" --out data/output/hyogyeong_6na.json
+# ==============================================================================
