@@ -12,13 +12,16 @@ main.py
         --chapter "경(經) 1장 - (고문 제7장) 효평(孝平)" \
         --out data/output/hyogyeong_6na.json
 
-PaddleOCR을 쓰고 싶다면 requirements.txt의 paddle 관련 줄 주석을 풀고
-설치한 뒤 --backend paddle 을 명시적으로 붙이세요.
+PaddleOCR을 쓰고 싶다면 requirements.txt의 paddle 관련 줄 주석을 풀고 설치한 뒤 
+--backend paddle 을 명시적으로 붙이세요.
 
---ground-truth 옵션은 CER/WER 자동 계산 기능을 켭니다.
-주의: 이 옵션에 세종한글고전 사이트의 교감 텍스트를 그대로 옮겨
-사용하는 것은 저작권 위배 소지가 있습니다. README 3번 섹션을 반드시
-먼저 읽어보세요.
+--ground-truth 옵션(CER/WER 자동 계산)은 기본적으로 꺼져 있습니다.
+켜려면 아래 ENABLE_GROUND_TRUTH_EVAL 값을 코드에서 직접 True로 바꿔야 합니다. 
+--ground-truth 플래그만 붙인다고 켜지지 않도록 일부러 막아둔 것이니, 
+필요한 사람만 의도적으로 코드를 수정해서 사용하세요.
+
+주의: 세종한글고전 사이트의 교감 텍스트를 그대로 옮겨 정답으로 쓰는 것은 저작권 위배 소지가 있습니다. 
+README 3번 섹션을 반드시 먼저 읽어보세요.
 """
 
 import argparse
@@ -29,6 +32,11 @@ from preprocess import preprocess
 from ocr_engine import get_engine, results_to_text
 from postprocess import postprocess, to_structured_record
 from evaluate import cer, wer
+
+# 정확도 검증(CER/WER) 기능의 온/오프 스위치.
+# 상단에 언급한 것처럼 --ground-truth 플래그만으로는 켜지지 않고, 
+# 이 값을 True로 바꿔야만 실제로 평가가 수행됩니다. (README 3번: 저작권 주의사항 먼저 확인)
+ENABLE_GROUND_TRUTH_EVAL = False
 
 
 def run_pipeline(
@@ -53,14 +61,21 @@ def run_pipeline(
     final_text = postprocess(raw_text)
     record = to_structured_record(final_text, book=book, page=page, chapter=chapter)
 
-    # 5. (선택) 평가 - 저작권 주의사항은 README 3번 참고
-    if ground_truth_path and Path(ground_truth_path).exists():
-        with open(ground_truth_path, encoding="utf-8") as f:
-            reference = f.read()
-        record["evaluation"] = {
-            "CER": round(cer(reference, final_text), 4),
-            "WER": round(wer(reference, final_text), 4),
-        }
+    # 5. (선택) 평가 - 기본적으로 비활성화. 저작권 주의사항은 README 3번 참고
+    if ground_truth_path:
+        if not ENABLE_GROUND_TRUTH_EVAL:
+            print(
+                "[안내] 정확도 검증(CER/WER) 기능은 기본적으로 꺼져 있습니다.\n"
+                "       사용하려면 main.py 상단의 ENABLE_GROUND_TRUTH_EVAL 값을\n"
+                "       True로 직접 바꾼 뒤 다시 실행하세요. (README 3번 참고)"
+            )
+        elif Path(ground_truth_path).exists():
+            with open(ground_truth_path, encoding="utf-8") as f:
+                reference = f.read()
+            record["evaluation"] = {
+                "CER": round(cer(reference, final_text), 4),
+                "WER": round(wer(reference, final_text), 4),
+            }
 
     Path(out_path).parent.mkdir(parents=True, exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as f:
@@ -78,7 +93,15 @@ if __name__ == "__main__":
     parser.add_argument("--book", default="효경언해")
     parser.add_argument("--page", default="")
     parser.add_argument("--chapter", default="")
-    parser.add_argument("--ground-truth", default=None, help="CER/WER 평가용 정답 텍스트 경로 (README 3번 주의사항 참고)")
+    parser.add_argument(
+        "--ground-truth",
+        default=None,
+        help=(
+            "CER/WER 평가용 정답 텍스트 경로. 이 플래그만으로는 평가가 켜지지 "
+            "않고, main.py의 ENABLE_GROUND_TRUTH_EVAL을 True로 바꿔야 동작함. "
+            "(README 3번 주의사항 참고)"
+        ),
+    )
     parser.add_argument("--out", default="data/output/result.json")
     args = parser.parse_args()
 
