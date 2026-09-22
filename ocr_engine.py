@@ -12,6 +12,8 @@ ocr_engine.py
 한자+옛한글(이두/고어)이 섞인 문서라 두 백엔드 모두 완전하지 않음.
 실제 정확도를 올리려면 결국 TrOCR류를 한국 고문서 데이터로
 파인튜닝하는 방향이 필요 (README 참고).
+필자는 OCR 작업 실습을 두 번 정도 해봤을 뿐 경험이 많지 않기에
+기본 골격만 마련했을 뿐임.
 """
 
 from dataclasses import dataclass
@@ -28,8 +30,14 @@ class OCRResult:
 
 class PaddleOCRBackend:
     def __init__(self, lang: str = "korean", use_gpu: bool = False):
-        from paddleocr import PaddleOCR  # 지연 import (설치 안 됐을 때 다른 백엔드는 쓸 수 있게)
-
+        # [PaddleOCR 경우 지연 임포트입니다. 
+        # 지연 임포트(Lazy Import) 설명]
+        # import문을 파일 상단(모듈 레벨)이 아닌 __init__ 메서드 내부에 작성한 이유:
+        # 1. 의존성 분리: PaddleOCR가 설치되지 않은 환경에서도 사용자가 '--backend tesseract' 등
+        #    다른 백엔드를 선택해 프로그램을 정상 실행할 수 있도록 ModuleNotFoundError를 방지합니다.
+        # 2. 초기 로딩 최적화: 무거운 딥러닝 라이브러리(PaddleOCR)를 미리 로드하지 않고, 
+        #    실제로 해당 백엔드 객체가 생성되는 시점에만 메모리에 적재하여 불필요한 지연을 없앱니다.
+        from paddleocr import PaddleOCR  
         # 한자가 섞인 경우 lang="ch" 가 한자 인식률이 더 나을 수 있어
         # 실제 데이터로 두 설정을 비교해보는 것을 권장.
         self.engine = PaddleOCR(use_angle_cls=True, lang=lang, use_gpu=use_gpu, show_log=False)
@@ -69,11 +77,11 @@ class TesseractBackend:
 
 
 def get_engine(backend: Literal["paddle", "tesseract"] = "paddle", **kwargs):
-    if backend == "paddle":
-        return PaddleOCRBackend(**kwargs)
+    if backend == "paddle":    
+        return PaddleOCRBackend(**kwargs)  # <-- 이때 __init__이 실행됨
     elif backend == "tesseract":
-        return TesseractBackend(**kwargs)
-    raise ValueError(f"지원하지 않는 backend: {backend}")
+        return TesseractBackend(**kwargs) # <-- 이 경우 PaddleOCRBackend는 아예 생성 안 됨
+    raise ValueError(f"지원하지 않는 backend: {backend}")  # get_engine 통해 지연 임포트 로직 완성
 
 
 def results_to_text(results: list[OCRResult], vertical: bool = False) -> str:

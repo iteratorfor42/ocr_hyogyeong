@@ -2,7 +2,7 @@
 main.py
 -------
 효경언해(또는 다른 고문서) 이미지 한 장에 대해
-전처리 -> OCR -> 후처리 -> (선택)평가 를 한 번에 실행하는 CLI.
+전처리 -> OCR -> 후처리 -> (선택)평가를 한 번에 실행하는 CLI.
 
 사용 예 (backend 생략 시 기본값 tesseract 사용):
     python main.py data/raw/hyogyeong_6na.jpg \
@@ -14,14 +14,20 @@ main.py
 
 PaddleOCR을 쓰고 싶다면 requirements.txt의 paddle 관련 줄 주석을 풀고 설치한 뒤 
 --backend paddle 을 명시적으로 붙이세요.
+(일단 ocr_engine에서는 PaddleOCR을 글로벌이 아닌 init에 넣었습니다.)
 
 --ground-truth 옵션(CER/WER 자동 계산)은 기본적으로 꺼져 있습니다.
 켜려면 아래 ENABLE_GROUND_TRUTH_EVAL 값을 코드에서 직접 True로 바꿔야 합니다. 
 --ground-truth 플래그만 붙인다고 켜지지 않도록 일부러 막아둔 것이니, 
 필요한 사람만 의도적으로 코드를 수정해서 사용하세요.
-
-주의: 세종한글고전 사이트의 교감 텍스트를 그대로 옮겨 정답으로 쓰는 것은 저작권 위배 소지가 있습니다. 
-README 3번 섹션을 반드시 먼저 읽어보세요.
+(일단 이 작업 경우 KPoEM 작업보다는 저작권을 더 많이 고려했습니다.
+다른 글에서도 언급했듯, 
+*주의* 세종한글고전 사이트의 교감 텍스트를 그대로 옮겨 정답으로 쓰는 것은 저작권 위배 소지가 있습니다. 
+README 3번 섹션을 반드시 먼저 읽어보세요. 
+*꼭 README 먼저 읽어주세요!!!!!!!*
+코드 안전장치는 거의 다 마련해 놨는데, 
+제 경험상 바이브코딩을 하시는 경우 코드를 한 번에 AI 통해 돌리다 보니 안전장치가 다 사라져 버리기도 하더라고요.
+*꼭 README 두 번 이상 읽고 코드 돌리시길 바랍니다!!!!!!!*
 """
 
 import argparse
@@ -97,8 +103,8 @@ if __name__ == "__main__":
         "--ground-truth",
         default=None,
         help=(
-            "CER/WER 평가용 정답 텍스트 경로. 이 플래그만으로는 평가가 켜지지 "
-            "않고, main.py의 ENABLE_GROUND_TRUTH_EVAL을 True로 바꿔야 동작함. "
+            "CER/WER 평가용 정답 텍스트 경로."
+            "이 플래그만으로는 평가가 켜지지  않고, main.py의 ENABLE_GROUND_TRUTH_EVAL을 True로 바꿔야 동작함. "
             "(README 3번 주의사항 참고)"
         ),
     )

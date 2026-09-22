@@ -9,7 +9,8 @@ preprocess.py
 - 기울기 보정 (deskew)
 - 세로쓰기 문서 대응: 필요 시 90도 회전 옵션 제공
   (PaddleOCR/CRAFT류 검출기는 기본적으로 가로쓰기에 최적화되어 있어서,
-   세로쓰기 원문은 90도 회전 후 검출하면 인식률이 크게 개선되는 경우가 많음)
+   세로쓰기 원문은 90도 회전 후 검출하면 인식률이 크게 개선되는 경우가 많음
+   참고> 종이 원문의 인쇄 방식(호접장, 두루마리, 선장본 등) 자체는 OCR 모델의 입력에 영향 x
 """
 
 import cv2
@@ -22,7 +23,7 @@ def load_image(image_path: str) -> np.ndarray:
     if img is None:
         raise FileNotFoundError(
             f"이미지를 열 수 없습니다: {image_path}\n"
-            f"세종한글고전 사이트는 이미지를 JS 뷰어로 서빙하므로, "
+            f"세종한글고전 사이트는 이미지를 JS 뷰어로 서빙[serving]하므로, "
             f"'내려받기' 버튼이나 캡처를 이용해 로컬에 먼저 저장해야 합니다."
         )
     return img
@@ -49,7 +50,7 @@ def denoise(binarized: np.ndarray, h: int = 15) -> np.ndarray:
 def deskew(img: np.ndarray) -> np.ndarray:
     """
     간단한 기울기 보정. 텍스트 영역의 최소 외접 사각형 각도를 이용.
-    고문서는 스캔 각도가 미세하게 틀어진 경우가 많아 이 단계가 인식률에 영향을 준다.
+    고문서는 스캔 각도가 미세하게 틀어진 경우가 많아 이 단계가 인식률에 영향을 줌.
     """
     coords = np.column_stack(np.where(img > 0))
     if len(coords) == 0:

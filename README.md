@@ -4,12 +4,12 @@
 >『효경언해』 6ㄴ면 등을 대상으로 만든 파이프라인입니다.
 
 > Session 04 정리 내용(전처리 → 레이아웃 분석 → 문자 인식 → 후처리)을 그대로
-> 코드로 구현한 기본 골격입니다.
+> 코드로 구현한 기본 파이프라인입니다.
 
 
 ## 0. 먼저 확인할 점: 원본 이미지 확보
 
-이 사이트는 원본 이미지를 JS 뷰어(확대/축소/내려받기 버튼)로 서빙하고 있어서,
+이 사이트는 원본 이미지를 JS 뷰어(확대/축소/내려받기 버튼)로 제공(serving)하고 있어서,
 프로그램이 이미지 URL을 직접 크롤링할 수 있는 구조가 아니었습니다.
 그래서 이 코드는 **로컬에 미리 저장한 이미지**를 입력으로 받습니다.
 
@@ -39,6 +39,9 @@ winget install --id UB-Mannheim.TesseractOCR -e
 #    않는 경우가 많습니다. https://github.com/tesseract-ocr/tessdata 에서
 #    kor.traineddata, chi_sim.traineddata 를 받아
 #    'C:\Program Files\Tesseract-OCR\tessdata' 폴더에 넣어주세요.
+#    정확한 path는 사용자의 컴퓨터에 따라 다르며 
+#    일단 'tessdata' 폴더에 넣은 뒤 path 구조를 확인해 보시길 바랍니다.
+
 
 # macOS
 brew install tesseract tesseract-lang
@@ -60,11 +63,11 @@ python main.py data/raw/hyogyeong_6na.jpg \
 
 - `--backend` 를 생략하면 기본값인 `tesseract`로 실행됩니다.
   PaddleOCR을 쓰려면 `requirements.txt`의 paddle 관련 줄 주석을 풀고
-  설치한 뒤 `--backend paddle` 을 명시적으로 붙이세요.
+  설치한 뒤 `--backend paddle` 을 명시적으로 붙이세요. 
 - `--vertical` : 효경언해는 세로쓰기 목판본이므로 반드시 켜는 것을 권장.
-  내부적으로 이미지를 90도 회전해 검출기에 넣고, 결과를 다시 원래 읽기
-  순서로 정렬합니다. (`preprocess.py`, `ocr_engine.py` 참고)
-- 단계별로 따로 실행하고 싶다면:
+  내부적으로 이미지를 90도 회전해 검출기에 넣고,
+  결과를 다시 원래 읽기 순서로 정렬합니다. (`preprocess.py`, `ocr_engine.py` 참고)
+- 단계별로 따로 실행하고 싶다면 아래 내용 참고:
   ```bash
   python preprocess.py data/raw/hyogyeong_6na.jpg --vertical --out data/processed/6na.png
   python ocr_engine.py data/processed/6na.png --backend tesseract --vertical
@@ -81,19 +84,20 @@ python main.py data/raw/hyogyeong_6na.jpg \
 
 > 세종한글고전 사이트에 실린 언해문(예: 효경언해 6ㄴ면의 "언해" 탭 텍스트)은
 > 세종대왕기념사업회가 교감·역주한 저작물입니다. 
-> 이 텍스트를 그대로 `data/ground_truth/*.txt` 에 옮겨 담아 정답(reference)으로 사용하는 것은
-> 그 저작물을 복제하여 코드 저장소나 실행 결과물에 포함시키는 셈이 되므로
+> 이 텍스트를 그대로 `data/ground_truth/*.txt` 에 옮겨 담아
+> 정답(reference)으로 사용하는 것은 
+> 그 저작물을 복제하여 코드 저장소나 실행 결과물에 포함시키는 것이 되므로
 > 저작권에 위배될 소지가 있습니다.
 
-그래서 `--ground-truth` 옵션은 남겨뒀지만, 
-이 저장소 자체에는 어떤 교감 텍스트도 담겨 있지 않고, 
-`data/ground_truth/` 는 빈 폴더(`.gitkeep`)상태로만 유지됩니다. 
+> 그래서 `--ground-truth` 옵션은 남겨뒀지만, 
+> 이 저장소 자체에는 어떤 교감 텍스트도 담겨 있지 않고, 
+> `data/ground_truth/` 는 빈 폴더(`.gitkeep`)상태로만 유지됩니다. 
 
 이 옵션을 실제로 쓰려면:
 
 - 직접 저작권을 보유한 판독본/전사 데이터를 사용하거나
 - 저작권자(세종대왕기념사업회)로부터 별도 이용 허락을 받은 뒤
-- 개인 로컬 환경에서만 `data/ground_truth/`에 파일을 만들어 검증
+- 개인 로컬 환경에서만 `data/ground_truth/`에 파일을 만들어 검증하시길 바랍니다.
 
 ```bash
 python evaluate.py data/ground_truth/hyogyeong_6na.txt data/output/ocr_text.txt
@@ -107,10 +111,12 @@ python main.py data/raw/hyogyeong_6na.jpg --vertical --ground-truth data/ground_
 ## 4. 다음 단계 (파인튜닝)
 
 정리 내용에서 언급한 대로, 범용 PaddleOCR/Tesseract만으로는
-필사체·이체자·고어 혼합 문헌의 정확도에 한계가 있습니다. 다음 단계로:
+필사체·이체자·고어 혼합 문헌의 정확도에 한계가 있습니다. 
 
-1. `data/raw/`에 여러 면 이미지를 모으고, 정답 텍스트는 저작권 문제가
-   없는 경로(위 3번 참고)로 확보해 `data/ground_truth/`에 로컬로만 정리
+> 다음 단계로:
+
+1. `data/raw/`에 여러 면 이미지를 모으고, 
+   정답 텍스트는 저작권 문제가 없는 경로(위 3번 참고)로 확보해 `data/ground_truth/`에 로컬로만 정리
 2. HuggingFace `TrOCR`을 이 데이터로 파인튜닝 (`transformers` 이미 requirements에 포함)
 3. `postprocess.py`의 `VARIANT_CHAR_MAP`을 실제 이체자 사례로 계속 확장
 4. `to_structured_record()`에 인명·연호·서명 개체명 태깅 로직 추가
